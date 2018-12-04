@@ -12,7 +12,6 @@
 #define LONG_KEY_PRESS_TIME_MS 2000L
 #define VOLUME_CHECK_INTERVAL_MS 200L
 #define PLAY_DELAY_MS 500L
-#define FADE_OUT_MS 3L * 1000L * 60L
 
 #define PIN_KEY A3
 #define PIN_VOLUME A2
@@ -24,6 +23,10 @@
 #define BUTTON_TOGGLE_CONTINUOUS_PLAY         1
 #define BUTTON_TOGGLE_LOOP_PLAYLIST           2
 #define BUTTON_TOGGLE_RESTART_PLAY_ON_START   3
+
+// Sleep timer timeout is this time factor multiplied by button number
+#define SLEEP_TIMER_TIME_FACTOR ( 5L * 60L * 1000L)  // 5 minutes
+#define SLEEP_TIMER_FADE_OUT_MS ( 3L * 60L * 1000L ) // 3 minutes
 
 #ifdef AVR_UNO
  #define DEBUG
@@ -51,22 +54,28 @@ void writeTrackInfo(int16_t folder, int16_t track);
  SoftwareSerial softSerial(0, 1); // RX, TX
 #endif
 
-enum {
+enum Mode {
   MODE_NORMAL, MODE_SET_TIMER
-} mode = MODE_NORMAL;
+};
 
 boolean loopPlaylist = false;
 boolean continuousPlayWithinPlaylist = false;
 boolean restartLastTrackOnStart = false;
 
-float volFade = 1.0;
 int vol = -1;
 int key = -1;
 unsigned long keyPressTimeMs = 0L;
 unsigned long volumeHandledLastMs = 0L;
 
-unsigned long sleepAtMs = 0L;
-unsigned long offAtMs = 0L;
+#if( BUTTON_SLEEP_TIMER != 0 )
+  unsigned long sleepAtMs = 0L;
+  unsigned long offAtMs = 0L;
+  float volFade = 1.0;
+  Mode mode = MODE_NORMAL;
+#else
+  #define volFade 1
+  #define mode MODE_NORMAL
+#endif
 
 unsigned long nowMs;
 
@@ -111,6 +120,7 @@ class Mp3Notify
 
 DFMiniMp3<SoftwareSerial, Mp3Notify> player(softSerial);
 
+#if( BUTTON_SLEEP_TIMER != 0 )
 void turnOff() {
   volFade = 0.0;
   player.setVolume(0);
@@ -130,6 +140,7 @@ void turnOff() {
     delay(5000);
   }
 }
+#endif
 
 void initDFPlayer(boolean reset = false) {
   delay(100);
@@ -243,14 +254,18 @@ void setup() {
   DEBUG_PRINTLN("Setup done.");
 }
 
+#if( BUTTON_SLEEP_TIMER != 0 )
 inline void handleSleepTimer() {
   if (sleepAtMs != 0 && nowMs >= sleepAtMs) {
-    volFade = 1.0 - (nowMs - sleepAtMs) / (float) (offAtMs - sleepAtMs);
+    volFade = 1.0 - (nowMs - sleepAtMs) / (float) SLEEP_TIMER_FADE_OUT_MS;
     if (volFade <= 0.0) {
       turnOff();
     }
   }
 }
+#else
+  #define handleSleepTimer()
+#endif
 
 inline void handleVolume() {
   if (nowMs > volumeHandledLastMs + VOLUME_CHECK_INTERVAL_MS) {
@@ -279,10 +294,12 @@ inline void handleKeyPress() {
         if( (nowMs - keyPressTimeMs) >= LONG_KEY_PRESS_TIME_MS ) {
           int advertise = 0;
           switch( key ) {
+#if( BUTTON_SLEEP_TIMER != 0 )
             case BUTTON_SLEEP_TIMER:
               mode = MODE_SET_TIMER;
               advertise = 100;
               break;
+#endif
             case BUTTON_TOGGLE_CONTINUOUS_PLAY:
               continuousPlayWithinPlaylist = !continuousPlayWithinPlaylist;
               advertise = (continuousPlayWithinPlaylist ? 200 : 201);
@@ -311,22 +328,25 @@ inline void handleKeyPress() {
         }
         break;
 
+#if( BUTTON_SLEEP_TIMER != 0 )
       case MODE_SET_TIMER:
         playOrAdvertise(key);
 
         if (key == 1) {
+          // deactivate sleep timer
           sleepAtMs = 0;
           offAtMs = 0;
           volFade = 1.0;
         } else {
-          sleepAtMs = nowMs + (key - 1) * 1000L * 60L * 5L;
-          offAtMs = sleepAtMs + FADE_OUT_MS;
+          // set timer to multiple of button number
+          sleepAtMs = nowMs + (key - 1) * SLEEP_TIMER_TIME_FACTOR;
+          offAtMs = sleepAtMs + SLEEP_TIMER_FADE_OUT_MS;
         }
 
         delay(1000);
         mode = MODE_NORMAL;
         break;
-
+#endif
     }
 
     key = -1;
