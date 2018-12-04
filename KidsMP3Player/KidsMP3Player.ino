@@ -319,27 +319,27 @@ inline void handleKeyPress() {
     int keyOld = key;
 
     if (keyCurrent > 933 - BUTTON_TOLERANCE) {
-      key = 11;
+      key = 1;
     } else if (keyCurrent > 846 - BUTTON_TOLERANCE) {
-      key = 9;
+      key = 4;
     } else if (keyCurrent > 760 - BUTTON_TOLERANCE) {
-      key = 6;
+      key = 7;
     } else if (keyCurrent > 676 - BUTTON_TOLERANCE) {
-      key = 3;
+      key = 10;
     } else if (keyCurrent > 590 - BUTTON_TOLERANCE) {
-      key = 2;
+      key = 8;
     } else if (keyCurrent > 504 - BUTTON_TOLERANCE) {
       key = 5;
     } else if (keyCurrent > 414 - BUTTON_TOLERANCE) {
-      key = 8;
+      key = 2;
     } else if (keyCurrent > 321 - BUTTON_TOLERANCE) {
-      key = 10;
+      key = 3;
     } else if (keyCurrent > 222 - BUTTON_TOLERANCE) {
-      key = 7;
+      key = 6;
     } else if (keyCurrent > 115 - BUTTON_TOLERANCE) {
-      key = 4;
+      key = 9;
     } else if (keyCurrent > 0) {
-      key = 1;
+      key = 11;
     }
 
     if (keyOld != key) {
