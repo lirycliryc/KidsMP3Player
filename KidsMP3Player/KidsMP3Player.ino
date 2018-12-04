@@ -20,6 +20,11 @@
 
 #define NO_FOLDERS 11
 
+#define BUTTON_SLEEP_TIMER                   11
+#define BUTTON_TOGGLE_CONTINUOUS_PLAY         1
+#define BUTTON_TOGGLE_LOOP_PLAYLIST           2
+#define BUTTON_TOGGLE_RESTART_PLAY_ON_START   3
+
 #ifdef AVR_UNO
  #define DEBUG
 #endif
@@ -271,27 +276,37 @@ inline void handleKeyPress() {
   if (keyCurrent > 958 && key > 0) {
     switch (mode) {
       case MODE_NORMAL:
-        if (nowMs - keyPressTimeMs >= LONG_KEY_PRESS_TIME_MS && key == 11) {
-          mode = MODE_SET_TIMER;
-          playOrAdvertise(100);
-          delay(1000);
-        } else if (nowMs - keyPressTimeMs >= LONG_KEY_PRESS_TIME_MS && key == 1) {
-          continuousPlayWithinPlaylist = !continuousPlayWithinPlaylist;
-          playOrAdvertise(continuousPlayWithinPlaylist ? 200 : 201);
-          writeConfig();
-          delay(1000);
-        } else if (nowMs - keyPressTimeMs >= LONG_KEY_PRESS_TIME_MS && key == 2) {
-          loopPlaylist = !loopPlaylist;
-          playOrAdvertise(loopPlaylist ? 300 : 301);
-          writeConfig();
-          delay(1000);
-        } else if (nowMs - keyPressTimeMs >= LONG_KEY_PRESS_TIME_MS && key == 3) {
-          restartLastTrackOnStart = !restartLastTrackOnStart;
-          playOrAdvertise(restartLastTrackOnStart ? 400 : 401);
-          writeConfig();
-          writeTrackInfo(restartLastTrackOnStart ? curFolder : -1, restartLastTrackOnStart ? curTrack : -1);
-          delay(1000);
-        } else {
+        if( (nowMs - keyPressTimeMs) >= LONG_KEY_PRESS_TIME_MS ) {
+          int advertise = 0;
+          switch( key ) {
+            case BUTTON_SLEEP_TIMER:
+              mode = MODE_SET_TIMER;
+              advertise = 100;
+              break;
+            case BUTTON_TOGGLE_CONTINUOUS_PLAY:
+              continuousPlayWithinPlaylist = !continuousPlayWithinPlaylist;
+              advertise = (continuousPlayWithinPlaylist ? 200 : 201);
+              writeConfig();
+              break;
+            case BUTTON_TOGGLE_LOOP_PLAYLIST:
+              loopPlaylist = !loopPlaylist;
+              advertise = (loopPlaylist ? 300 : 301);
+              writeConfig();
+              break;
+            case BUTTON_TOGGLE_RESTART_PLAY_ON_START:
+              restartLastTrackOnStart = !restartLastTrackOnStart;
+              advertise = (restartLastTrackOnStart ? 400 : 401);
+              writeConfig();
+              writeTrackInfo(restartLastTrackOnStart ? curFolder : -1, restartLastTrackOnStart ? curTrack : -1);
+              break;
+          }
+          if( advertise ) {
+            playOrAdvertise( advertise );
+            delay(1000);
+          }
+        }
+        else
+        {
           playFolderOrNextInFolder(key);
         }
         break;
