@@ -24,6 +24,10 @@
 #define BUTTON_TOGGLE_LOOP_PLAYLIST           2
 #define BUTTON_TOGGLE_RESTART_PLAY_ON_START   3
 
+#if( BUTTON_TOGGLE_CONTINUOUS_PLAY || BUTTON_TOGGLE_LOOP_PLAYLIST || BUTTON_TOGGLE_RESTART_PLAY_ON_START )
+  #define USE_TOGGLE_FEATURES
+#endif
+
 // Sleep timer timeout is this time factor multiplied by button number
 #define SLEEP_TIMER_TIME_FACTOR ( 5L * 60L * 1000L)  // 5 minutes
 #define SLEEP_TIMER_FADE_OUT_MS ( 3L * 60L * 1000L ) // 3 minutes
@@ -58,9 +62,21 @@ enum Mode {
   MODE_NORMAL, MODE_SET_TIMER
 };
 
-boolean loopPlaylist = false;
-boolean continuousPlayWithinPlaylist = false;
-boolean restartLastTrackOnStart = false;
+#if( BUTTON_TOGGLE_CONTINUOUS_PLAY != 0 )
+  boolean continuousPlayWithinPlaylist = false;
+#else
+  #define continuousPlayWithinPlaylist true
+#endif
+#if( BUTTON_TOGGLE_LOOP_PLAYLIST != 0 )
+  boolean loopPlaylist = false;
+#else
+  #define loopPlaylist true
+#endif
+#if( BUTTON_TOGGLE_RESTART_PLAY_ON_START != 0 )
+  boolean restartLastTrackOnStart = false;
+#else
+  #define restartLastTrackOnStart true
+#endif
 
 int vol = -1;
 int key = -1;
@@ -155,17 +171,29 @@ void initDFPlayer(boolean reset = false) {
 void readConfig() {
   uint8_t cfg = eeprom_read_byte((uint8_t*) EEPROM_CFG);
 
+#if( BUTTON_TOGGLE_LOOP_PLAYLIST != 0 )
   loopPlaylist = cfg & 1;
+#endif
+#if( BUTTON_TOGGLE_CONTINUOUS_PLAY != 0 )
   continuousPlayWithinPlaylist = cfg & 2;
+#endif
+#if( BUTTON_TOGGLE_RESTART_PLAY_ON_START != 0 )
   restartLastTrackOnStart = cfg & 4;
+#endif
 }
 
 void writeConfig() {
   uint8_t cfg = eeprom_read_byte((uint8_t*) EEPROM_CFG);
 
+#if( BUTTON_TOGGLE_LOOP_PLAYLIST != 0 )
   cfg = (cfg & (0xff ^ 1)) | (loopPlaylist ? 1 : 0);
+#endif
+#if( BUTTON_TOGGLE_CONTINUOUS_PLAY != 0 )
   cfg = (cfg & (0xff ^ 2)) | (continuousPlayWithinPlaylist ? 2 : 0);
+#endif
+#if( BUTTON_TOGGLE_RESTART_PLAY_ON_START != 0 )
   cfg = (cfg & (0xff ^ 4)) | (restartLastTrackOnStart ? 4 : 0);
+#endif
 
   eeprom_update_byte((uint8_t*) EEPROM_CFG, cfg);
 }
@@ -232,8 +260,10 @@ void setup() {
   pinMode(PIN_VOLUME_INTERNAL, INPUT);
   pinMode(PIN_KEY, INPUT_PULLUP);
 
+#ifdef USE_TOGGLE_FEATURES
   readConfig();
   delay(50);
+#endif
 
   player.begin();
 
@@ -291,6 +321,7 @@ inline void handleKeyPress() {
   if (keyCurrent > 958 && key > 0) {
     switch (mode) {
       case MODE_NORMAL:
+#ifdef USE_TOGGLE_FEATURES
         if( (nowMs - keyPressTimeMs) >= LONG_KEY_PRESS_TIME_MS ) {
           int advertise = 0;
           switch( key ) {
@@ -300,22 +331,28 @@ inline void handleKeyPress() {
               advertise = 100;
               break;
 #endif
+#if( BUTTON_TOGGLE_CONTINUOUS_PLAY != 0 )
             case BUTTON_TOGGLE_CONTINUOUS_PLAY:
               continuousPlayWithinPlaylist = !continuousPlayWithinPlaylist;
               advertise = (continuousPlayWithinPlaylist ? 200 : 201);
               writeConfig();
               break;
+#endif
+#if( BUTTON_TOGGLE_LOOP_PLAYLIST != 0 )
             case BUTTON_TOGGLE_LOOP_PLAYLIST:
               loopPlaylist = !loopPlaylist;
               advertise = (loopPlaylist ? 300 : 301);
               writeConfig();
               break;
+#endif
+#if( BUTTON_TOGGLE_RESTART_PLAY_ON_START != 0 )
             case BUTTON_TOGGLE_RESTART_PLAY_ON_START:
               restartLastTrackOnStart = !restartLastTrackOnStart;
               advertise = (restartLastTrackOnStart ? 400 : 401);
               writeConfig();
               writeTrackInfo(restartLastTrackOnStart ? curFolder : -1, restartLastTrackOnStart ? curTrack : -1);
               break;
+#endif
           }
           if( advertise ) {
             playOrAdvertise( advertise );
@@ -323,6 +360,7 @@ inline void handleKeyPress() {
           }
         }
         else
+#endif
         {
           playFolderOrNextInFolder(key);
         }
