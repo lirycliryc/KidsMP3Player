@@ -20,10 +20,31 @@
 
 #define NO_FOLDERS 11
 
+#ifdef AVR_UNO
+ #define DEBUG
+#endif
+
+#ifdef DEBUG
+ #define DEBUG_INIT()      Serial.begin(9600)
+ #define DEBUG_PRINT(x)    Serial.print(x)
+ #define DEBUG_PRINTLN(x)  Serial.println (x)
+#else
+ #define DEBUG_INIT()
+ #define DEBUG_PRINT(x)
+ #define DEBUG_PRINTLN(x)
+#endif
+
+#define DEBUG_LINE  DEBUG_PRINT("Line: "); \
+                    DEBUG_PRINTLN(__LINE__);
+
 void playFolderOrNextInFolder(int folder, boolean loop);
 void writeTrackInfo(int16_t folder, int16_t track);
 
-SoftwareSerial softSerial(0, 1); // RX, TX
+#ifdef AVR_UNO
+ SoftwareSerial softSerial(10, 11); // RX, TX
+#else
+ SoftwareSerial softSerial(0, 1); // RX, TX
+#endif
 
 enum {
   MODE_NORMAL, MODE_SET_TIMER
@@ -188,12 +209,14 @@ void playFolderOrNextInFolder(int folder, boolean loop = true) {
 }
 
 void setup() {
+  DEBUG_INIT();
+  DEBUG_PRINTLN("Starting setup.");
+
   pinMode(PIN_VOLUME, INPUT);
   pinMode(PIN_VOLUME_INTERNAL, INPUT);
   pinMode(PIN_KEY, INPUT_PULLUP);
 
   readConfig();
-
   delay(50);
 
   player.begin();
@@ -211,6 +234,8 @@ void setup() {
       startTrackAtMs = millis() + PLAY_DELAY_MS;
     }
   }
+
+  DEBUG_PRINTLN("Setup done.");
 }
 
 inline void handleSleepTimer() {
@@ -233,6 +258,9 @@ inline void handleVolume() {
     if (volNew != vol) {
       vol = volNew;
       player.setVolume(vol);
+
+      DEBUG_PRINT("New volume: ");
+      DEBUG_PRINTLN(vol);
     }
   }
 }
@@ -316,6 +344,11 @@ inline void handleKeyPress() {
 
     if (keyOld != key) {
       keyPressTimeMs = nowMs;
+      DEBUG_PRINT("Key pressed: ");
+      DEBUG_PRINT(key);
+      DEBUG_PRINT(" (ADC ");
+      DEBUG_PRINT(keyCurrent);
+      DEBUG_PRINTLN(")");
     }
   }
 }
@@ -349,6 +382,3 @@ void loop() {
 
   delay(50);
 }
-
-
-
