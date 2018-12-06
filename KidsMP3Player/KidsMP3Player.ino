@@ -12,6 +12,7 @@
 #define LONG_KEY_PRESS_TIME_MS 2000L
 #define VOLUME_CHECK_INTERVAL_MS 200L
 #define PLAY_DELAY_MS 500L
+#define PREVIOUS_TIMEOUT_MS 2000L
 
 #define PIN_KEY A3
 #define PIN_VOLUME A2
@@ -23,6 +24,9 @@
 #define BUTTON_TOGGLE_CONTINUOUS_PLAY         1
 #define BUTTON_TOGGLE_LOOP_PLAYLIST           2
 #define BUTTON_TOGGLE_RESTART_PLAY_ON_START   3
+#define BUTTON_PREVIOUS_TRACK                 0
+#define BUTTON_NEXT_TRACK                     0
+#define BUTTON_TOGGLE_PAUSE                   0
 
 #if( BUTTON_TOGGLE_CONTINUOUS_PLAY || BUTTON_TOGGLE_LOOP_PLAYLIST || BUTTON_TOGGLE_RESTART_PLAY_ON_START )
   #define USE_TOGGLE_FEATURES
@@ -101,6 +105,7 @@ int16_t curTrack = -1;
 int16_t expectedGlobalTrackToFinish = -1;
 
 unsigned long startTrackAtMs = 0L;
+unsigned long startedTrackAtMs = 0L;
 
 int maxTracks[NO_FOLDERS];
 
@@ -252,6 +257,25 @@ void playFolderOrNextInFolder(int folder, boolean loop = true) {
   startTrackAtMs = millis() + PLAY_DELAY_MS;
 }
 
+void restartTrackOrPlayPrevious() {
+  if( nowMs - startedTrackAtMs < PREVIOUS_TIMEOUT_MS ) {
+    if(--curTrack < 1) {
+      curTrack = maxTracks[curFolder - 1];
+    }
+  }
+
+  startTrackAtMs = millis() + PLAY_DELAY_MS;
+}
+
+void togglePause() {
+  int state = player.getStatus();
+  if ((state & 1) == 1) {
+    player.pause();
+  } else {
+    player.start();
+  }
+}
+
 void setup() {
   DEBUG_INIT();
   DEBUG_PRINTLN("Starting setup.");
@@ -362,7 +386,26 @@ inline void handleKeyPress() {
         else
 #endif
         {
-          playFolderOrNextInFolder(key);
+          switch( key ) {
+#if( BUTTON_PREVIOUS_TRACK != 0 )
+            case BUTTON_PREVIOUS_TRACK:
+              restartTrackOrPlayPrevious();
+              break;
+#endif
+#if( BUTTON_NEXT_TRACK != 0 )
+            case BUTTON_NEXT_TRACK:
+              playFolderOrNextInFolder(curFolder);
+              break;
+#endif
+#if( BUTTON_TOGGLE_PAUSE != 0 )
+            case BUTTON_TOGGLE_PAUSE:
+              togglePause();
+              break;
+#endif
+            default:
+              playFolderOrNextInFolder(key);
+              break;
+          }
         }
         break;
 
@@ -435,6 +478,9 @@ void loop() {
 
   if (startTrackAtMs != 0 and nowMs >= startTrackAtMs) {
     startTrackAtMs = 0;
+#if( BUTTON_PREVIOUS_TRACK != 0 )
+    startedTrackAtMs = nowMs;
+#endif
     player.playFolderTrack(curFolder, curTrack);
     if (restartLastTrackOnStart) {
       writeTrackInfo(curFolder, curTrack);
