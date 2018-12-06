@@ -97,8 +97,6 @@ enum Mode {
   #define restartLastTrackOnStart true
 #endif
 
-int vol = -1;
-int key = -1;
 unsigned long keyPressTimeMs = 0L;
 unsigned long volumeHandledLastMs = 0L;
 
@@ -337,6 +335,8 @@ inline void handleSleepTimer() {
 #endif
 
 inline void handleVolume() {
+  static int vol = -1;
+
   if (nowMs > volumeHandledLastMs + VOLUME_CHECK_INTERVAL_MS) {
     volumeHandledLastMs = nowMs;
 
@@ -355,6 +355,7 @@ inline void handleVolume() {
 }
 
 inline void handleKeyPress() {
+  static int key = -1;
   int keyCurrent = analogRead(PIN_KEY);
 
   if (keyCurrent > 958 && key > 0) {
