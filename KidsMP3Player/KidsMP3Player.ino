@@ -20,6 +20,21 @@
 
 #define NO_FOLDERS 11
 
+// List of buttons(adc_value, key_number) sorted by adc_value in descending order
+#define LIST_OF_BUTTONS \
+BUTTON(933,  1) \
+BUTTON(846,  4) \
+BUTTON(760,  7) \
+BUTTON(676, 10) \
+BUTTON(590,  8) \
+BUTTON(504,  5) \
+BUTTON(414,  2) \
+BUTTON(321,  3) \
+BUTTON(222,  6) \
+BUTTON(115,  9) \
+BUTTON(  0, 11)
+
+// set button number to 0 to exclude feature
 #define BUTTON_SLEEP_TIMER                   11
 #define BUTTON_TOGGLE_CONTINUOUS_PLAY         1
 #define BUTTON_TOGGLE_LOOP_PLAYLIST           2
@@ -434,29 +449,9 @@ inline void handleKeyPress() {
   } else if (keyCurrent <= 958) {
     int keyOld = key;
 
-    if (keyCurrent > 933 - BUTTON_TOLERANCE) {
-      key = 1;
-    } else if (keyCurrent > 846 - BUTTON_TOLERANCE) {
-      key = 4;
-    } else if (keyCurrent > 760 - BUTTON_TOLERANCE) {
-      key = 7;
-    } else if (keyCurrent > 676 - BUTTON_TOLERANCE) {
-      key = 10;
-    } else if (keyCurrent > 590 - BUTTON_TOLERANCE) {
-      key = 8;
-    } else if (keyCurrent > 504 - BUTTON_TOLERANCE) {
-      key = 5;
-    } else if (keyCurrent > 414 - BUTTON_TOLERANCE) {
-      key = 2;
-    } else if (keyCurrent > 321 - BUTTON_TOLERANCE) {
-      key = 3;
-    } else if (keyCurrent > 222 - BUTTON_TOLERANCE) {
-      key = 6;
-    } else if (keyCurrent > 115 - BUTTON_TOLERANCE) {
-      key = 9;
-    } else if (keyCurrent > 0) {
-      key = 11;
-    }
+    #define BUTTON(adc_value, key_number) if(keyCurrent > adc_value - BUTTON_TOLERANCE) { key = key_number; } else
+    LIST_OF_BUTTONS;
+    #undef BUTTON
 
     if (keyOld != key) {
       keyPressTimeMs = nowMs;
