@@ -18,30 +18,28 @@
 #define PIN_VOLUME A2
 #define PIN_VOLUME_INTERNAL A1
 
-#define NO_FOLDERS 11
+#define NO_FOLDERS 6
 
 // List of buttons(adc_value, key_number) sorted by adc_value in descending order
 #define LIST_OF_BUTTONS \
-BUTTON(933,  1) \
-BUTTON(846,  4) \
-BUTTON(760,  7) \
-BUTTON(676, 10) \
-BUTTON(590,  8) \
-BUTTON(504,  5) \
-BUTTON(414,  2) \
-BUTTON(321,  3) \
-BUTTON(222,  6) \
-BUTTON(115,  9) \
-BUTTON(  0, 11)
+BUTTON(914,  1) \
+BUTTON(810,  4) \
+BUTTON(707,  7) \
+BUTTON(604,  8) \
+BUTTON(500,  5) \
+BUTTON(391,  2) \
+BUTTON(275,  3) \
+BUTTON(151,  6) \
+BUTTON(  0,  9)
 
 // set button number to 0 to exclude feature
-#define BUTTON_SLEEP_TIMER                   11
-#define BUTTON_TOGGLE_CONTINUOUS_PLAY         1
-#define BUTTON_TOGGLE_LOOP_PLAYLIST           2
-#define BUTTON_TOGGLE_RESTART_PLAY_ON_START   3
-#define BUTTON_PREVIOUS_TRACK                 0
-#define BUTTON_NEXT_TRACK                     0
-#define BUTTON_TOGGLE_PAUSE                   0
+#define BUTTON_SLEEP_TIMER                    8
+#define BUTTON_TOGGLE_CONTINUOUS_PLAY         0
+#define BUTTON_TOGGLE_LOOP_PLAYLIST           0
+#define BUTTON_TOGGLE_RESTART_PLAY_ON_START   0
+#define BUTTON_PREVIOUS_TRACK                 7
+#define BUTTON_NEXT_TRACK                     9
+#define BUTTON_TOGGLE_PAUSE                   8
 
 #if( BUTTON_TOGGLE_CONTINUOUS_PLAY || BUTTON_TOGGLE_LOOP_PLAYLIST || BUTTON_TOGGLE_RESTART_PLAY_ON_START )
   #define USE_TOGGLE_FEATURES
@@ -51,7 +49,7 @@ BUTTON(  0, 11)
 #define SLEEP_TIMER_TIME_FACTOR ( 5L * 60L * 1000L)  // 5 minutes
 #define SLEEP_TIMER_FADE_OUT_MS ( 3L * 60L * 1000L ) // 3 minutes
 
-#define STORE_TRACKS_PER_FOLDER     0
+#define STORE_TRACKS_PER_FOLDER               1
 
 #ifdef AVR_UNO
  #define DEBUG
@@ -448,7 +446,7 @@ inline void handleKeyPress() {
       case MODE_SET_TIMER:
         playOrAdvertise(key);
 
-        if (key == 1) {
+        if (key == BUTTON_SLEEP_TIMER) {
           // deactivate sleep timer
           sleepAtMs = 0;
           offAtMs = 0;
