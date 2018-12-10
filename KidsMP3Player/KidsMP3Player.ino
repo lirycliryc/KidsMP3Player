@@ -18,7 +18,7 @@
 #define PIN_VOLUME A2
 #define PIN_VOLUME_INTERNAL A1
 
-#define NO_FOLDERS 11
+#define NO_FOLDERS 9
 
 // List of buttons(adc_value, key_number) sorted by adc_value in descending order
 #define LIST_OF_BUTTONS \
@@ -35,12 +35,12 @@ BUTTON(115,  9) \
 BUTTON(  0, 11)
 
 // set button number to 0 to exclude feature
-#define BUTTON_SLEEP_TIMER                   11
-#define BUTTON_TOGGLE_CONTINUOUS_PLAY         1
-#define BUTTON_TOGGLE_LOOP_PLAYLIST           2
-#define BUTTON_TOGGLE_RESTART_PLAY_ON_START   3
-#define BUTTON_PREVIOUS_TRACK                 0
-#define BUTTON_NEXT_TRACK                     0
+#define BUTTON_SLEEP_TIMER                    0
+#define BUTTON_TOGGLE_CONTINUOUS_PLAY         0
+#define BUTTON_TOGGLE_LOOP_PLAYLIST           0
+#define BUTTON_TOGGLE_RESTART_PLAY_ON_START   0
+#define BUTTON_PREVIOUS_TRACK                 10
+#define BUTTON_NEXT_TRACK                     11
 #define BUTTON_TOGGLE_PAUSE                   0
 
 #if( BUTTON_TOGGLE_CONTINUOUS_PLAY || BUTTON_TOGGLE_LOOP_PLAYLIST || BUTTON_TOGGLE_RESTART_PLAY_ON_START )
@@ -51,7 +51,7 @@ BUTTON(  0, 11)
 #define SLEEP_TIMER_TIME_FACTOR ( 5L * 60L * 1000L)  // 5 minutes
 #define SLEEP_TIMER_FADE_OUT_MS ( 3L * 60L * 1000L ) // 3 minutes
 
-#define STORE_TRACKS_PER_FOLDER     0
+#define STORE_TRACKS_PER_FOLDER               1
 
 #ifdef AVR_UNO
  #define DEBUG
