@@ -51,6 +51,8 @@ BUTTON(  0, 11)
 #define SLEEP_TIMER_TIME_FACTOR ( 5L * 60L * 1000L)  // 5 minutes
 #define SLEEP_TIMER_FADE_OUT_MS ( 3L * 60L * 1000L ) // 3 minutes
 
+#define STORE_TRACKS_PER_FOLDER     0
+
 #ifdef AVR_UNO
  #define DEBUG
 #endif
@@ -225,7 +227,11 @@ void readTrackInfo() {
     return;
   }
 
+#if( STORE_TRACKS_PER_FOLDER != 1 )
   curTrack = (int16_t) eeprom_read_word((uint16_t*) EEPROM_TRACK);
+#else
+  curTrack = (int16_t) eeprom_read_word((uint16_t*) (EEPROM_TRACK + curFolder * sizeof(uint16_t)));
+#endif
   if (curTrack < 1 || curTrack > maxTracks[curFolder - 1]) {
     curTrack = -1;
     curFolder = -1;
@@ -234,7 +240,13 @@ void readTrackInfo() {
 
 void writeTrackInfo(int16_t folder, int16_t track) {
   eeprom_update_word((uint16_t*) EEPROM_FOLDER, (uint16_t) folder);
+#if( STORE_TRACKS_PER_FOLDER != 1 )
   eeprom_update_word((uint16_t*) EEPROM_TRACK, (uint16_t) track);
+#else
+  if( folder >= 1 && folder <= NO_FOLDERS ) {
+      eeprom_update_word((uint16_t*) (EEPROM_TRACK + folder * sizeof(uint16_t)), (uint16_t) track);
+  }
+#endif
 }
 
 void playOrAdvertise(int fileNo) {
@@ -251,7 +263,14 @@ void playFolderOrNextInFolder(int folder, boolean loop = true) {
 
   if (curFolder != folder) {
     curFolder = folder;
+#if( STORE_TRACKS_PER_FOLDER != 1 )
     curTrack = 1;
+#else
+  curTrack = (int16_t) eeprom_read_word((uint16_t*) (EEPROM_TRACK + curFolder * sizeof(uint16_t)));
+  if (curTrack < 1 || curTrack > maxTracks[curFolder - 1]) {
+    curTrack = 1;
+  }
+#endif
   } else {
     if (curTrack == -1) {
       curTrack = 1;
