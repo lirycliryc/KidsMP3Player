@@ -33,7 +33,7 @@ BUTTON(151,  6) \
 BUTTON(  0,  9)
 
 // set button number to 0 to exclude feature
-#define BUTTON_SLEEP_TIMER                    8
+#define BUTTON_SLEEP_TIMER                    0
 #define BUTTON_TOGGLE_CONTINUOUS_PLAY         0
 #define BUTTON_TOGGLE_LOOP_PLAYLIST           0
 #define BUTTON_TOGGLE_RESTART_PLAY_ON_START   0
@@ -43,6 +43,10 @@ BUTTON(  0,  9)
 
 #if( BUTTON_TOGGLE_CONTINUOUS_PLAY || BUTTON_TOGGLE_LOOP_PLAYLIST || BUTTON_TOGGLE_RESTART_PLAY_ON_START )
   #define USE_TOGGLE_FEATURES
+#endif
+
+#if( BUTTON_SLEEP_TIMER || BUTTON_TOGGLE_CONTINUOUS_PLAY || BUTTON_TOGGLE_LOOP_PLAYLIST || BUTTON_TOGGLE_RESTART_PLAY_ON_START )
+  #define USE_ADVERTISED_FEATURES
 #endif
 
 // Sleep timer timeout is this time factor multiplied by button number
@@ -325,7 +329,7 @@ void setup() {
 
   for (int i = 0; i < NO_FOLDERS; ++i) {
     maxTracks[i] = player.getFolderTrackCount(i + 1);
-    if (maxTracks[i] == -1) i--;
+    if (maxTracks[i] == -1) maxTracks[i] = 0;
   }
 
   if (restartLastTrackOnStart) {
@@ -376,14 +380,18 @@ inline void handleKeyPress() {
   int keyCurrent = analogRead(PIN_KEY);
 
   if (keyCurrent > 958 && key > 0) {
+    DEBUG_PRINT("Key hold down for (ms): ");
+    DEBUG_PRINTLN(nowMs - keyPressTimeMs);
     switch (mode) {
       case MODE_NORMAL:
-#ifdef USE_TOGGLE_FEATURES
+#ifdef USE_ADVERTISED_FEATURES
         if( (nowMs - keyPressTimeMs) >= LONG_KEY_PRESS_TIME_MS ) {
           int advertise = 0;
+          DEBUG_PRINTLN("FOOBAR");
           switch( key ) {
 #if( BUTTON_SLEEP_TIMER != 0 )
             case BUTTON_SLEEP_TIMER:
+              DEBUG_PRINTLN("Switch mode to MODE_SET_TIMER");
               mode = MODE_SET_TIMER;
               advertise = 100;
               break;
@@ -455,9 +463,14 @@ inline void handleKeyPress() {
           // set timer to multiple of button number
           sleepAtMs = nowMs + (key - 1) * SLEEP_TIMER_TIME_FACTOR;
           offAtMs = sleepAtMs + SLEEP_TIMER_FADE_OUT_MS;
+          DEBUG_PRINT("Sleep in (ms): ");
+          DEBUG_PRINTLN(sleepAtMs - nowMs);
+          DEBUG_PRINT("Turn off in (ms): ");
+          DEBUG_PRINTLN(offAtMs - nowMs);          
         }
 
         delay(1000);
+        DEBUG_PRINTLN("Switch mode to MODE_NORMAL");
         mode = MODE_NORMAL;
         break;
 #endif
